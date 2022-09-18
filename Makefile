@@ -1,6 +1,6 @@
 CC       = cc
 CPPFLAGS += -I slow5lib/include/
-CFLAGS   += -g -Wall -O2
+CFLAGS   += -g -Wall -O2  -std=c99
 LDFLAGS  += $(LIBS) -lz -lm -lpthread
 BUILD_DIR = build
 
@@ -27,7 +27,7 @@ $(BINARY): $(OBJ) slow5lib/lib/libslow5.a
 	$(CC) $(CFLAGS) $(OBJ) slow5lib/lib/libslow5.a $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/main.o: src/main.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LANGFLAG) $< -c -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/xyztool.o: src/xyztool.c src/misc.h src/error.h src/xyztool.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
