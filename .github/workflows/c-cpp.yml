@@ -13,6 +13,8 @@ jobs:
     container: ubuntu:14.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev gcc g++ autoconf automake make
     - name: env
@@ -27,6 +29,8 @@ jobs:
     container: ubuntu:16.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: apt-get update && apt-get install -y zlib1g-dev gcc g++ autoconf automake make valgrind
     - name: build
@@ -40,6 +44,8 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
     - name: build
@@ -51,6 +57,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install zlib1g-dev
     - name: build-gcc
@@ -89,6 +97,8 @@ jobs:
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: build
       run: make -j8
     - name: test
@@ -102,6 +112,8 @@ jobs:
       with:
         args: 'uname -a'
     - uses: actions/checkout@v1
+      with:
+        submodules: recursive
     - uses: docker://multiarch/ubuntu-core:arm64-bionic
       with:
         args: >
