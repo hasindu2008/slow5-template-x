@@ -1,4 +1,4 @@
-# slow5-template
+# slow5-template-x
 
 This is a template repository is mostly for my own use, but also demonstrates the advanced use of *slow5lib*. Documentation and comments are thus minimal and code is not so clean. For a simpler example visit [slow5-template](https://github.com/hasindu2008/slow5-template).
 
@@ -9,7 +9,7 @@ sudo apt-get install zlib1g-dev   #install zlib development libraries
 git clone --recursive https://github.com/hasindu2008/slow5-template-x
 cd slow5-template-x
 make
-./xyztool test/example.blow5
+./xyztool subtool1 test/example.blow5
 ```
 
 The commands to install zlib development libraries on some popular distributions:
