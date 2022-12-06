@@ -21,7 +21,7 @@ ex() {
     fi
 }
 
-echo "DNA sref"
+echo "Test 1"
 ex  ./xyztool subtool1 test/example.blow5 > test/tmp.txt  || die "Running the tool failed"
 diff -q test/example.exp test/tmp.txt || die "diff failed"
 

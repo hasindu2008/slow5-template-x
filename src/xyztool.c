@@ -1,7 +1,33 @@
-/* @file xyztool.c
-**
-** @@
+/**
+ * @file xyztool.c
+ * @brief common functions for xyztool
+ * @author Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+MIT License
+
+Copyright (c) 2019 Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
 ******************************************************************************/
+
 #include <assert.h>
 #include <math.h>
 #include <pthread.h>
@@ -17,8 +43,6 @@
 
 #include <sys/wait.h>
 #include <unistd.h>
-
-enum xyztool_log_level_opt _log_level = LOG_VERB;
 
 /* initialise the core data structure */
 core_t* init_core(char *slow5file, opt_t opt,double realtime0) {
@@ -45,11 +69,25 @@ core_t* init_core(char *slow5file, opt_t opt,double realtime0) {
     core->sum_bytes=0;
     core->total_reads=0; //total number mapped entries in the bam file (after filtering based on flags, mapq etc)
 
+#ifdef HAVE_ACC
+    if (core->opt.flag & XYZTOOL_ACC) {
+        VERBOSE("%s","Initialising accelator");
+    }
+#endif
+
+
     return core;
 }
 
 /* free the core data structure */
 void free_core(core_t* core,opt_t opt) {
+
+#ifdef HAVE_ACC
+    if (core->opt.flag & XYZTOOL_ACC) {
+        VERBOSE("%s","Freeing accelator");
+    }
+#endif
+
     slow5_close(core->sp);
     free(core);
 }
@@ -155,12 +193,43 @@ void work_per_single_read(core_t* core,db_t* db, int32_t i){
     mean_single(core,db,i);
 }
 
+void mean_db(core_t* core, db_t* db) {
+#ifdef HAVE_ACC
+    if (core->opt.flag & XYZTOOL_ACC) {
+        VERBOSE("%s","Aligning reads with accel");
+        work_db(core,db,mean_single);
+    }
+#endif
+
+    if (!(core->opt.flag & XYZTOOL_ACC)) {
+        //fprintf(stderr, "cpu\n");
+        work_db(core,db,mean_single);
+    }
+}
+
+
 void process_db(core_t* core,db_t* db){
     double proc_start = realtime();
-    work_db(core, db, work_per_single_read);
+
+    if(core->opt.flag & XYZTOOL_PRF || core->opt.flag & XYZTOOL_ACC){
+        double a = realtime();
+        work_db(core,db,parse_single);
+        double b = realtime();
+        core->parse_time += (b-a);
+
+        a = realtime();
+        mean_db(core,db);
+        b = realtime();
+        core->calc_time += (b-a);
+
+    } else {
+        work_db(core, db, work_per_single_read);
+    }
+
     double proc_end = realtime();
     core->process_db_time += (proc_end-proc_start);
 }
+
 
 /* write the output for a processed data batch */
 void output_db(core_t* core, db_t* db) {
@@ -214,13 +283,8 @@ void init_opt(opt_t* opt) {
 
     opt->debug_break=-1;
 
-}
+#ifdef HAVE_ACC
+    opt->flag |= XYZTOOL_ACC;
+#endif
 
-
-enum xyztool_log_level_opt get_log_level(){
-    return _log_level;
-}
-
-void set_log_level(enum xyztool_log_level_opt level){
-    _log_level = level;
 }

@@ -1,5 +1,31 @@
-/* @file xyztool.h
-**
+/**
+ * @file xyztool.c
+ * @brief common functions for xyztool
+ * @author Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+MIT License
+
+Copyright (c) 2019 Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
 ******************************************************************************/
 
 #ifndef XYZTOOL_H
@@ -14,12 +40,8 @@
  * flags related to the user specified options (opt_t) *
  *******************************************************/
 
-#define XYZTOOL_RNA 0x001 //if RNA or not
-#define XYZTOOL_DTW 0x002 //if dtw-std
-#define XYZTOOL_INV 0x004 //if set, reverse reference events instead of query events
-#define XYZTOOL_SEC 0x008 //if secondaries are printed
-#define XYZTOOL_REF 0x010 //map to the whole reference
-#define XYZTOOL_END 0x020 //map the end of the query
+#define XYZTOOL_PRF 0x001 //cpu-profile mode
+#define XYZTOOL_ACC 0x002 //accelerator enable
 
 #define WORK_STEAL 1 //simple work stealing enabled or not (no work stealing mean no load balancing)
 #define STEAL_THRESH 1 //stealing threshold
@@ -27,7 +49,7 @@
 /* user specified options */
 typedef struct {
 
-    uint32_t flag;              //flags
+    uint64_t flag;              //flags
     int32_t batch_size;         //max reads loaded at once: K
     int64_t batch_size_bytes;   //max bytes loaded at once: B
 
@@ -73,6 +95,8 @@ typedef struct {
 
     double load_db_time;
     double process_db_time;
+    double parse_time;
+    double calc_time;
     double output_time;
 
     //stats //set by output_db

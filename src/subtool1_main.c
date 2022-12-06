@@ -1,7 +1,33 @@
-/* @file  dtw_main.c
-**
-** @@
+/**
+ * @file subtool1_main.c
+ * @brief entry point to subtool 1
+ * @author Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+MIT License
+
+Copyright (c) 2019 Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
 ******************************************************************************/
+
 #include "xyztool.h"
 #include "error.h"
 #include "misc.h"
@@ -23,6 +49,8 @@ static struct option long_options[] = {
     {"version", no_argument, 0, 'V'},              //5
     {"output",required_argument, 0, 'o'},          //6 output to a file [stdout]
     {"debug-break",required_argument, 0, 0},       //7 break after processing the first batch (used for debugging)
+    {"profile-cpu",required_argument, 0, 0},       //8 perform section by section (used for profiling - for CPU only)
+    {"accel",required_argument, 0, 0},             //9 accelerator
     {0, 0, 0, 0}};
 
 
@@ -39,39 +67,16 @@ static inline void print_help_msg(FILE *fp_help, opt_t opt){
 
     fprintf(fp_help,"\nadvanced options:\n");
     fprintf(fp_help,"   --debug-break INT          break after processing the specified no. of batches\n");
-}
+    fprintf(fp_help,"   --profile-cpu=yes|no       process section by section (used for profiling on CPU)\n");
+#ifdef HAVE_ACC
+    fprintf(fp_help,"   --accel=yes|no             Running on accelerator [%s]\n",(opt.flag&XYZTOOL_ACC?"yes":"no"));
+#endif
 
-//parse yes or no arguments : taken from minimap2
-static inline void yes_or_no(opt_t* opt, uint64_t flag, int long_idx,
-                             const char* arg,
-                             int yes_to_set)
-{
-    if (yes_to_set) {
-        if (strcmp(arg, "yes") == 0 || strcmp(arg, "y") == 0) {
-            opt->flag |= flag;
-        } else if (strcmp(arg, "no") == 0 || strcmp(arg, "n") == 0) {
-            opt->flag &= ~flag;
-        } else {
-            WARNING("option '--%s' only accepts 'yes' or 'no'.",
-                    long_options[long_idx].name);
-        }
-    } else {
-        if (strcmp(arg, "yes") == 0 || strcmp(arg, "y") == 0) {
-            opt->flag &= ~flag;
-        } else if (strcmp(arg, "no") == 0 || strcmp(arg, "n") == 0) {
-            opt->flag |= flag;
-        } else {
-            WARNING("option '--%s' only accepts 'yes' or 'no'.",
-                    long_options[long_idx].name);
-        }
-    }
 }
 
 int subtool1_main(int argc, char* argv[]) {
 
     double realtime0 = realtime();
-
-    //signal(SIGSEGV, sig_handler);
 
     const char* optstring = "t:B:K:v:o:hV";
 
@@ -108,15 +113,23 @@ int subtool1_main(int argc, char* argv[]) {
             }
         } else if (c=='v'){
             int v = atoi(optarg);
-            set_log_level((enum xyztool_log_level_opt)v);
+            set_log_level((enum log_level_opt)v);
         } else if (c=='V'){
             fprintf(stdout,"xyztool %s\n",XYZTOOL_VERSION);
             exit(EXIT_SUCCESS);
         } else if (c=='h'){
             fp_help = stdout;
             fp_help = stdout;
-        } else if(c == 0 && longindex == 15){ //debug break
+        } else if(c == 0 && longindex == 7){ //debug break
             opt.debug_break = atoi(optarg);
+        } else if(c == 0 && longindex == 8){ //sectional benchmark todo : warning for gpu mode
+            yes_or_no(&opt.flag, XYZTOOL_PRF, long_options[longindex].name, optarg, 1);
+        } else if(c == 0 && longindex == 9){ //accel
+        #ifdef HAVE_ACC
+            yes_or_no(&opt.flag, XYZTOOL_ACC, long_options[longindex].name, optarg, 1);
+        #else
+            WARNING("%s", "--accel has no effect when compiled for the CPU");
+        #endif
         }
     }
 
@@ -183,6 +196,10 @@ int subtool1_main(int argc, char* argv[]) {
 
     fprintf(stderr, "\n[%s] Data loading time: %.3f sec", __func__,core->load_db_time);
     fprintf(stderr, "\n[%s] Data processing time: %.3f sec", __func__,core->process_db_time);
+    if((core->opt.flag&XYZTOOL_PRF)|| core->opt.flag & XYZTOOL_ACC){
+            fprintf(stderr, "\n[%s]     - Parse time: %.3f sec",__func__, core->parse_time);
+            fprintf(stderr, "\n[%s]     - Calc time: %.3f sec",__func__, core->calc_time);
+    }
     fprintf(stderr, "\n[%s] Data output time: %.3f sec", __func__,core->output_time);
 
     fprintf(stderr,"\n");

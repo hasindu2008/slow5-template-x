@@ -1,7 +1,33 @@
-/* @file main.c
-**
+/**
+ * @file main.c
+ * @brief entry point
+ * @author Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+MIT License
+
+Copyright (c) 2019 Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
 ******************************************************************************/
-#include <signal.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,33 +37,6 @@
 #include "misc.h"
 #include "xyztool.h"
 
-#ifdef HAVE_EXECINFO_H
-    #include <execinfo.h>
-#endif
-
-extern enum xyztool_log_level_opt xyztool_log_level;
-
-//make the segmentation faults a bit cool
-void sig_handler(int sig) {
-#ifdef HAVE_EXECINFO_H
-    void* array[100];
-    size_t size = backtrace(array, 100);
-    ERROR("An unfortunate event of a segmentation fault has occurred. But at least "
-          "it is better than a wrong answer%s",
-          ".");
-    fprintf(stderr,
-            "[%s::DEBUG]\033[1;35m Here is the backtrace in case it is of any "
-            "use:\n",
-            __func__);
-    backtrace_symbols_fd(&array[2], size - 1, STDERR_FILENO);
-    fprintf(stderr, "\033[0m\n");
-#else
-    ERROR("An unfortunate event of a segmentation fault has occurred. But at least "
-          "it is better than a wrong answer%s",
-          ".");
-#endif
-    exit(EXIT_FAILURE);
-}
 
 int subtool1_main(int argc, char* argv[]);
 
@@ -47,10 +46,10 @@ int print_usage(FILE *fp_help){
     fprintf(fp_help,"command:\n");
     fprintf(fp_help,"         subtool1      do something\n");
     fprintf(fp_help,"         subtool2      do something\n");
+
     if(fp_help==stderr){
         return(EXIT_FAILURE);
-    }
-    else if(fp_help==stdout){
+    } else if(fp_help==stdout){
         return(EXIT_SUCCESS);
     } else {
         return(EXIT_FAILURE);
@@ -61,7 +60,6 @@ int print_usage(FILE *fp_help){
 int main(int argc, char* argv[]){
 
     double realtime0 = realtime();
-    signal(SIGSEGV, sig_handler);
 
     int ret=1;
 
@@ -81,12 +79,9 @@ int main(int argc, char* argv[]){
         return print_usage(stderr);
     }
 
-    fprintf(stderr,"[%s] Version: %s\n", __func__,XYZTOOL_VERSION);
+    fprintf(stderr,"[%s] Version: %s\n", __func__, XYZTOOL_VERSION);
     fprintf(stderr, "[%s] CMD:", __func__);
-    for (int i = 0; i < argc; ++i) {
-        fprintf(stderr, " %s", argv[i]);
-    }
-
+    for (int i = 0; i < argc; ++i) fprintf(stderr, " %s", argv[i]);
     fprintf(stderr, "\n[%s] Real time: %.3f sec; CPU time: %.3f sec; Peak RAM: %.3f GB\n\n",
             __func__, realtime() - realtime0, cputime(),peakrss() / 1024.0 / 1024.0 / 1024.0);
 
