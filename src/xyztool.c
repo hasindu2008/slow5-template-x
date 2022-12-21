@@ -67,7 +67,7 @@ core_t* init_core(char *slow5file, opt_t opt,double realtime0) {
     core->output_time=0;
 
     core->sum_bytes=0;
-    core->total_reads=0; //total number mapped entries in the bam file (after filtering based on flags, mapq etc)
+    core->total_reads=0;
 
 #ifdef HAVE_ACC
     if (core->opt.flag & XYZTOOL_ACC) {
